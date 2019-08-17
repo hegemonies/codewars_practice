@@ -1,5 +1,9 @@
 package HRDF;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 public class TimeFormatter {
     static int seconds = 0;
     static int minutes = 0;
@@ -7,122 +11,149 @@ public class TimeFormatter {
     static int days = 0;
     static int years = 0;
 
-    public static String formatDuration(int seconds) {
-        if (seconds == 0) {
+    enum TypeTimeUnit {
+        SECONDS, MINUTES, HOURS, DAYS, YEARS
+    }
+
+    public static String formatDuration(int localSeconds) {
+        if (localSeconds == 0) {
             return "now";
         }
 
+        while (localSeconds > 59) {
+            minutes++;
+            localSeconds -= 60;
+
+            if (minutes > 59) {
+                hours++;
+                minutes -= 60;
+            }
+
+            if (hours > 23) {
+                days++;
+                hours -= 24;
+            }
+
+            if (days > 365) {
+                years++;
+                days -= 365;
+            }
+        }
+
+        seconds = localSeconds;
+
         System.out.println(_toString());
-        return _toString();
+
+        String result = _toString();
+        toZeroAll();
+
+        return result;
+    }
+
+    private static void toZeroAll() {
+        seconds = 0;
+        minutes = 0;
+        hours = 0;
+        days = 0;
+        years = 0;
     }
 
     public static String _toString() {
         StringBuilder sb = new StringBuilder();
 
-        int countNonZero = 0;
+        List<TypeTimeUnit> nonzero = new ArrayList<TypeTimeUnit>();
 
         if (seconds != 0) {
-            countNonZero++;
+            nonzero.add(TypeTimeUnit.SECONDS);
         }
         if (minutes != 0) {
-            countNonZero++;
+            nonzero.add(TypeTimeUnit.MINUTES);
         }
         if (hours != 0) {
-            countNonZero++;
+            nonzero.add(TypeTimeUnit.HOURS);
         }
         if (days != 0) {
-            countNonZero++;
+            nonzero.add(TypeTimeUnit.DAYS);
         }
         if (years != 0) {
-            countNonZero++;
+            nonzero.add(TypeTimeUnit.YEARS);
         }
 
-        if (countNonZero == 2) {
-            if (years != 0) {
+        if (nonzero.size() == 2) {
+            sb.append(getAnyString(nonzero.get(1)));
+            sb.append(" and ");
+            sb.append(getAnyString(nonzero.get(0)));
+        } else if (nonzero.size() > 2) {
+            Collections.reverse(nonzero);
+            for (TypeTimeUnit type : nonzero) {
+                sb.append(getAnyString(type));
 
-            }
-            if (days != 0) {
-                if (days == 1) {
-                    sb.append(", " + Integer.toString(days) + " day");
+                if ((nonzero.indexOf(type) + 1) == nonzero.size()) {
+                    continue;
+                } else if ((nonzero.indexOf(type) + 2) != nonzero.size()) {
+                    sb.append(", ");
                 } else {
-                    sb.append(", " + Integer.toString(days) + " days");
+                    sb.append(" and ");
                 }
             }
-            if (hours != 0) {
-                if (hours == 1) {
-                    sb.append(", " + Integer.toString(hours) + " hour");
-                } else {
-                    sb.append(", " + Integer.toString(hours) + " hours");
-                }
-            }
-            if (minutes != 0) {
-                if (minutes == 1) {
-                    sb.append(", " + Integer.toString(minutes) + " minute");
-                } else {
-                    sb.append(", " + Integer.toString(minutes) + " minutes");
-                }
-            }
-            if (seconds != 0) {
-                if (seconds == 1) {
-                    sb.append(", " + Integer.toString(seconds) + " second");
-                } else {
-                    sb.append(", " + Integer.toString(seconds) + " seconds");
-                }
-            }
-        } else if (countNonZero > 2) {
-            if (years != 0) {
-                if (years == 1) {
-                    sb.append(Integer.toString(years) + " year");
-                } else {
-                    sb.append(Integer.toString(years) + " years");
-                }
-            }
-
-            if (days != 0) {
-                if (days == 1) {
-                    sb.append(", " + Integer.toString(days) + " day");
-                } else {
-                    sb.append(", " + Integer.toString(days) + " days");
-                }
-            }
-
-            if (hours != 0) {
-                if (hours == 1) {
-                    sb.append(", " + Integer.toString(hours) + " hour");
-                } else {
-                    sb.append(", " + Integer.toString(hours) + " hours");
-                }
-            }
-
-            if (minutes != 0) {
-                if (minutes == 1) {
-                    sb.append(", " + Integer.toString(minutes) + " minute");
-                } else {
-                    sb.append(", " + Integer.toString(minutes) + " minutes");
-                }
-            }
-
-            if (seconds != 0) {
-                if (seconds == 1) {
-                    sb.append(", " + Integer.toString(seconds) + " second");
-                } else {
-                    sb.append(", " + Integer.toString(seconds) + " seconds");
-                }
-            }
-        } else if (countNonZero == 1) {
-
+        } else if (nonzero.size() == 1) {
+            sb.append(getAnyString(nonzero.get(0)));
         }
 
         return sb.toString();
     }
 
+    static String getAnyString(TypeTimeUnit type) {
+        if (type == TypeTimeUnit.SECONDS) {
+            return getSecondsToString();
+        } else if (type == TypeTimeUnit.MINUTES) {
+            return getMinutesToString();
+        } else if (type == TypeTimeUnit.HOURS) {
+            return getHoursToString();
+        } else if (type == TypeTimeUnit.DAYS) {
+            return getDaysToString();
+        }
+
+        return getYearsToString();
+    }
+
     static String getYearsToString() {
         if (years == 1) {
-            return Integer.toString(years) + " year";
+            return years + " year";
         } else {
-            return Integer.toString(years) + " years";
+            return years + " years";
+        }
+    }
+
+    static String getDaysToString() {
+        if (days == 1) {
+            return days + " day";
+        } else {
+            return days + " days";
+        }
+    }
+
+    static String getHoursToString() {
+        if (hours == 1) {
+            return hours + " hour";
+        } else {
+            return hours + " hours";
+        }
+    }
+
+    static String getMinutesToString() {
+        if (minutes == 1) {
+            return minutes + " minute";
+        } else {
+            return minutes + " minutes";
+        }
+    }
+
+    static String getSecondsToString() {
+        if (seconds == 1) {
+            return seconds + " second";
+        } else {
+            return seconds + " seconds";
         }
     }
 }
-
-// todo: refactor this shit
